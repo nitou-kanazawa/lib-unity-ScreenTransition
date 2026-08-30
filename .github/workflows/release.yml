@@ -1,0 +1,68 @@
+# タグ push で GitHub Release を作成する
+#
+# UPM は `<repo>.git?path=<package path>#<tag>` でタグを直接参照できるため、
+# 成果物 (zip 等) のアップロードは行わない。タグと Release ノートだけを用意する。
+#
+# 使い方:
+#   1. unity/Assets/MyPackage/package.json の version を更新する
+#   2. CHANGELOG.md に該当バージョンの見出し (## [x.y.z]) を追加する
+#   3. git tag vX.Y.Z && git push origin vX.Y.Z
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  PACKAGE_DIR: unity/Assets/MyPackage
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out my unity project.
+        uses: actions/checkout@v4
+
+      # タグ (vX.Y.Z) と package.json の version の食い違いは事故のもとなので先に落とす
+      - name: Verify version
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(jq -r '.version' "$PACKAGE_DIR/package.json")
+          echo "tag=$TAG / package.json=$PKG"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::タグ ($GITHUB_REF_NAME) と package.json の version ($PKG) が一致していません"
+            exit 1
+          fi
+          echo "version=$TAG" >> "$GITHUB_OUTPUT"
+
+      # CHANGELOG.md から該当バージョンの節だけを抜き出して Release ノートにする
+      - name: Extract changelog
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          # 正規表現のエスケープを避けるため index() で前方一致を見る
+          awk -v head="## [$VERSION]" '
+            index($0, head) == 1 { found = 1; next }
+            found && index($0, "## [") == 1 { exit }
+            found { print }
+          ' "$PACKAGE_DIR/CHANGELOG.md" > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "::warning::CHANGELOG.md に [$VERSION] の節が見つかりませんでした"
+            echo "See CHANGELOG.md" > release-notes.md
+          fi
+          cat release-notes.md
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file release-notes.md

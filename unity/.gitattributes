@@ -1,0 +1,58 @@
+# 改行コードの正規化
+# リポジトリには常に LF で保存する。core.autocrlf の個人設定に左右されないよう
+# ここで明示する。
+* text=auto eol=lf
+
+# Unity がシリアライズする YAML 資産。
+# これらを書き出すのは IDE ではなく Unity 自身であり .editorconfig が効かない。
+# LF 固定にしないとチェックアウトのたびに CRLF 化され、中身が同一でも
+# 「変更あり」と判定されてしまう。
+*.unity     text eol=lf merge=unityyamlmerge
+*.prefab    text eol=lf merge=unityyamlmerge
+*.asset     text eol=lf merge=unityyamlmerge
+*.mat       text eol=lf merge=unityyamlmerge
+*.anim      text eol=lf merge=unityyamlmerge
+*.controller text eol=lf merge=unityyamlmerge
+*.physicMaterial text eol=lf merge=unityyamlmerge
+*.physicsMaterial2D text eol=lf merge=unityyamlmerge
+*.meta      text eol=lf
+
+# バイナリ資産（差分・マージの対象外）
+*.psd  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.tga  binary
+*.tif  binary
+*.exr  binary
+*.hdr  binary
+*.fbx  binary
+*.obj  binary
+*.blend binary
+*.wav  binary
+*.mp3  binary
+*.ogg  binary
+*.ttf  binary
+*.otf  binary
+*.dll  binary
+*.so   binary
+*.dylib binary
+*.a    binary
+*.unitypackage binary
+
+# 差分表示の言語ヒント
+*.cs text eol=lf diff=csharp
+
+# サードパーティライブラリを除外
+Assets/TextMeshPro/** linguist-vendored
+Assets/Plugins/** linguist-vendored
+
+# 自動生成ファイル
+*.meta linguist-generated
+*.unity linguist-generated
+
+# シェーダー関連
+*.shader linguist-vendored
+*.shadergraph linguist-vendored
+*.hlsl linguist-vendored

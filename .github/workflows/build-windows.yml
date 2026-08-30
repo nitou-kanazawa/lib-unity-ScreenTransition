@@ -1,0 +1,130 @@
+# 【開発時の動作確認用】Demo シーンを含むプロジェクトが実際にビルドできるかを確かめる。
+# パッケージの配布物には関与しないため自動実行はせず、workflow_dispatch の手動実行のみ。
+name: Run the Windows build
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    name: Windows build
+    runs-on: ubuntu-latest
+    # Slack通知の有無を制御するため Secret をジョブ env に展開する
+    # (Secret は if: 条件で直接参照できないため env 経由にする)
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    steps:
+      # リポジトリのチェックアウト
+      - name: Check out my unity project.
+        uses: actions/checkout@v4
+
+      # LFS管理対象をリストアップ
+      - name: Create LFS file list
+        run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+
+      # LFSファイルのキャッシュを取得する
+      - name: Restore LFS cache
+        uses: actions/cache@v3
+        id: lfs-cache
+        with:
+          path: .git/lfs
+          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      # LFSファイルをPullする
+      - name: Git LFS Pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
+
+      # ファイル名にgitのハッシュを含めたいので$GITHUB_OUTPUTに保存しておく
+      - name: Set outputs
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      # Cache
+      # Unityプロジェクトは unity/ サブディレクトリにあるためパスを合わせる
+      - uses: actions/cache@v3
+        with:
+          path: unity/Library
+          key: Library-Windows-${{ hashFiles('unity/Assets/**', 'unity/Packages/**', 'unity/ProjectSettings/**') }}
+          restore-keys: |
+            Library-Windows-
+
+      # NuGetForUnity で管理している NuGetパッケージ(R3のコア等)を復元する。
+      # InstalledPackages は .gitignore 対象でリポジトリに含まれないため、
+      # CI 上で明示的に復元しないと R3.Unity 等が Observable<>/Unit/Subject<> を解決できずコンパイルに失敗する。
+      # (次のディスク解放ステップで .NET を削除するため、その前に実行する)
+      - name: Restore NuGetForUnity packages
+        run: |
+          dotnet tool install --global NuGetForUnity.Cli
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          nugetforunity restore unity
+
+      # UnityエディタのDockerイメージ(Windowsビルド用は十数GB)の展開で
+      # ubuntu-latestランナーのディスクが枯渇するため、不要なプリインストールを削除して空きを確保する
+      - name: Free up disk space
+        run: |
+          echo "=== Before ===" && df -h /
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          echo "=== After ===" && df -h /
+
+      # 【CI検証用】Standalone のスクリプティングバックエンドを一時的に Mono へ上書きする。
+      # Windows 向け IL2CPP ビルドは Linux ランナー上ではクロスコンパイルできない(MSVC/Windows SDKが必要)ため。
+      # リポジトリの ProjectSettings は IL2CPP のまま維持し、CI 実行時のワークツリーだけ書き換える。
+      # 本番の IL2CPP ビルドが必要になったら Windows ランナーで別途行う。
+      - name: Force Mono backend for CI build
+        run: |
+          sed -i '/^  scriptingBackend:/,/^  [^ ]/ s/^    Standalone: 1$/    Standalone: 0/' unity/ProjectSettings/ProjectSettings.asset
+          echo "--- scriptingBackend after override ---"
+          sed -n '/^  scriptingBackend:/,/^  [^ ]/p' unity/ProjectSettings/ProjectSettings.asset
+
+      # Unityプロジェクトのビルド
+      # 設定しない場合、buildフォルダに出力される
+      - name: Run the Windows build
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          # Unityプロジェクトのルートは unity/ サブディレクトリ
+          projectPath: unity
+          targetPlatform: StandaloneWindows64
+          # buildName は実行ファイル名(Windows.exe)を決める。
+          # 出力フォルダは targetPlatform 由来の build/StandaloneWindows64/ になる点に注意。
+          buildName: Windows
+          # CIで ProjectSettings を一時上書きするためツリーが dirty になる。
+          # 既定の Semantic バージョニングが dirty ツリーで中断するのを許容する。
+          allowDirtyBuild: true
+          # unity/ProjectSettings/ProjectVersion.txt の m_EditorVersion を自動で参照する
+          unityVersion: auto
+
+      # 成果物をZIPにしてアップロードする
+      - name: Upload the Windows Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Build-${{ steps.vars.outputs.sha_short }}
+          # 出力フォルダは targetPlatform 名(StandaloneWindows64)
+          path: build/StandaloneWindows64/
+
+      # ビルド結果を Slack に通知（成功・失敗どちらも）
+      # 事前に Repository secret SLACK_WEBHOOK_URL に Incoming Webhook URL を登録しておくこと
+      - name: Notify Slack
+        # Slack未設定(Secret空)のフォークでは静かにスキップする
+        if: always() && env.SLACK_WEBHOOK_URL != ''
+        # 通知の失敗(URL失効・Slack障害等)がビルド結果に影響しないようにする
+        continue-on-error: true
+        uses: slackapi/slack-github-action@v2
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "*Windows build* ${{ job.status }}\nrepo: ${{ github.repository }}\nbranch: ${{ github.ref_name }} (${{ steps.vars.outputs.sha_short }})\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|▶ 実行ページ / Artifacts を開く>"
+            }
