@@ -1,4 +1,4 @@
-# <パッケージ名>
+# Screen Transition
 
 [![license](https://img.shields.io/badge/LICENSE-MIT-green.svg)](LICENSE)
 
