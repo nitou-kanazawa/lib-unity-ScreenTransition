@@ -1,0 +1,2 @@
+# シェルスクリプトは CI (Linux) で実行するので LF 固定
+*.sh text eol=lf

@@ -1,0 +1,28 @@
+# 配布用サンプル (Samples~/Demo) が開発用デモ (Assets/Demo) と同期しているかを検証する。
+#
+# UPM はタグ時点のリポジトリからパッケージを解決するため、Samples~ はタグを打つ前の
+# コミットに入っている必要がある。リリース時にコピーするワークフローでは間に合わない。
+# そのため「ズレていたら PR を落とす」形で強制する。
+#
+# Unity ライセンスを必要としないので、fork からの PR でも動く。
+name: Samples
+
+on:
+  pull_request:
+  push:
+    branches: [develop]
+  workflow_dispatch: {}
+
+concurrency:
+  group: samples-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Samples~ in sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Samples~/Demo is in sync
+        run: tools/sync-samples.sh --check

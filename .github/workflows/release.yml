@@ -4,9 +4,10 @@
 # 成果物 (zip 等) のアップロードは行わない。タグと Release ノートだけを用意する。
 #
 # 使い方:
-#   1. unity/Assets/MyPackage/package.json の version を更新する
-#   2. CHANGELOG.md に該当バージョンの見出し (## [x.y.z]) を追加する
-#   3. git tag vX.Y.Z && git push origin vX.Y.Z
+#   1. tools/sync-samples.sh を実行し、Samples~/Demo の差分があればコミットする
+#   2. unity/Assets/ScreenTransitions/package.json の version を更新する
+#   3. CHANGELOG.md に該当バージョンの見出し (## [x.y.z]) を追加する
+#   4. git tag vX.Y.Z && git push origin vX.Y.Z
 name: Release
 
 on:
@@ -18,7 +19,7 @@ permissions:
   contents: write
 
 env:
-  PACKAGE_DIR: unity/Assets/MyPackage
+  PACKAGE_DIR: unity/Assets/ScreenTransitions
 
 jobs:
   release:
@@ -28,6 +29,10 @@ jobs:
     steps:
       - name: Check out my unity project.
         uses: actions/checkout@v4
+
+      # Samples~ はタグ時点のツリーに入っている必要があるので、ズレていたらここで落とす
+      - name: Verify samples in sync
+        run: tools/sync-samples.sh --check
 
       # タグ (vX.Y.Z) と package.json の version の食い違いは事故のもとなので先に落とす
       - name: Verify version

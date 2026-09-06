@@ -1,0 +1,30 @@
+{
+  "name": "com.waribashi.screen-transitions",
+  "version": "0.1.0",
+  "displayName": "Screen Transitions",
+  "description": "ルール画像ベースとオブジェクトベースの画面遷移（蓋絵）を UniTask の async/await で統一的に扱うライブラリ。\n閉じ切っている間はループアニメ（HoldLoop）が自動で回るため、ロード中に画面が止まらない。\n汎用の蓋絵 9 種とルール画像 12 種を同梱し、テーマ性の強い蓋絵はサンプルに分けている。",
+  "unity": "6000.0",
+  "author": {
+    "name": "waribashi"
+  },
+  "keywords": [
+    "transition",
+    "screen-transition",
+    "curtain",
+    "ui",
+    "ugui",
+    "unitask",
+    "timeline"
+  ],
+  "dependencies": {
+    "com.unity.timeline": "1.8.12",
+    "com.unity.ugui": "2.0.0"
+  },
+  "samples": [
+    {
+      "displayName": "Demo",
+      "description": "全蓋絵を一覧できるデモシーン 2 本（TransitionDemo / TransitionUndersea）とシーンビルダー。テーマ固有の蓋絵 12 種（潜水艦 10 / 没入系 2）を実装例として同梱。",
+      "path": "Samples~/Demo"
+    }
+  ]
+}
