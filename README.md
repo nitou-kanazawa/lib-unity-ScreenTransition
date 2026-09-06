@@ -53,3 +53,20 @@ https://github.com/nitou-kanazawa/lib-unity-ScreenTransition.git?path=unity/Asse
 - [パッケージ README](unity/Assets/ScreenTransitions/README.md) — 使い方・ライフサイクル契約・遷移一覧
 - [設計メモ](unity/Assets/ScreenTransitions/Documentation~/DESIGN.md)
 - [CHANGELOG](unity/Assets/ScreenTransitions/CHANGELOG.md)
+
+## 開発
+
+デモの実体は `unity/Assets/Demo` にあります。パッケージが `Assets/` 配下にあるため、
+配布用の `Samples~/Demo` は Unity から無視され、開発プロジェクトでは編集も再生もできません。
+そこで実体を `Assets/Demo` で開発し、そのコピーを `Samples~` に持たせています。
+
+デモを変更したら同期してコミットしてください。
+
+```bash
+tools/sync-samples.sh
+```
+
+UPM は `?path=...#<tag>` を「そのタグ時点のリポジトリ」から解決するため、`Samples~` は
+**タグを打つ前のコミットに入っている必要があります**（タグ push をトリガーにした
+ワークフローでは間に合いません）。同期漏れは CI (`.github/workflows/samples.yml`) と
+リリースワークフローの両方で検出して落とします。

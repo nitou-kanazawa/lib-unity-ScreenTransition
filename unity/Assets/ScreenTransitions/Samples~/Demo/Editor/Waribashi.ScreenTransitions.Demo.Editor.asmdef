@@ -1,0 +1,22 @@
+{
+    "name": "Waribashi.ScreenTransitions.Demo.Editor",
+    "rootNamespace": "Waribashi.ScreenTransitions.Demo.EditorTools",
+    "references": [
+        "Waribashi.ScreenTransitions",
+        "Waribashi.ScreenTransitions.Demo",
+        "Unity.Timeline",
+        "Unity.InputSystem",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
