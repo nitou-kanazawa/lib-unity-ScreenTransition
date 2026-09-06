@@ -4,7 +4,7 @@
 # 成果物 (zip 等) のアップロードは行わない。タグと Release ノートだけを用意する。
 #
 # 使い方:
-#   1. unity/Assets/MyPackage/package.json の version を更新する
+#   1. unity/Assets/ScreenTransitions/package.json の version を更新する
 #   2. CHANGELOG.md に該当バージョンの見出し (## [x.y.z]) を追加する
 #   3. git tag vX.Y.Z && git push origin vX.Y.Z
 name: Release
@@ -18,7 +18,7 @@ permissions:
   contents: write
 
 env:
-  PACKAGE_DIR: unity/Assets/MyPackage
+  PACKAGE_DIR: unity/Assets/ScreenTransitions
 
 jobs:
   release:
