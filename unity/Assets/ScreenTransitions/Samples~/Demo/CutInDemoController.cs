@@ -17,7 +17,7 @@ namespace Waribashi.ScreenTransitions.Demo
     {
         public CharacterCutIn[] cutIns;
         public Button[] cutInButtons;
-        public Button allOutButton;
+        public Button chainButton;
         public Button fadeButton;
         public FadeTransition fade;
         public Button counterButton;
@@ -36,8 +36,8 @@ namespace Waribashi.ScreenTransitions.Demo
                 cutInButtons[i].onClick.AddListener(() => PlayOne(index).Forget());
             }
 
-            if (allOutButton != null)
-                allOutButton.onClick.AddListener(() => PlayAllOut().Forget());
+            if (chainButton != null)
+                chainButton.onClick.AddListener(() => PlayChain().Forget());
 
             if (fadeButton != null)
                 fadeButton.onClick.AddListener(() => PlayFade().Forget());
@@ -75,8 +75,8 @@ namespace Waribashi.ScreenTransitions.Demo
             _running = false;
         }
 
-        /// <summary>総攻撃。連鎖は await を並べるだけで足りる。</summary>
-        async UniTaskVoid PlayAllOut()
+        /// <summary>連続発動。連鎖は await を並べるだけで足りる。</summary>
+        async UniTaskVoid PlayChain()
         {
             if (_running)
                 return;
@@ -84,7 +84,7 @@ namespace Waribashi.ScreenTransitions.Demo
 
             for (int i = 0; i < cutIns.Length; i++)
             {
-                SetStatus("ALL-OUT ATTACK  " + (i + 1) + " / " + cutIns.Length);
+                SetStatus("CHAIN CUT-IN  " + (i + 1) + " / " + cutIns.Length);
                 await cutIns[i].RunAsync(0.18f);
             }
 

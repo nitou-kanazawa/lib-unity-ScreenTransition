@@ -148,10 +148,10 @@ namespace Waribashi.ScreenTransitions.Demo.EditorTools
 
         static readonly Character[] Characters =
         {
-            new Character { Name = "JOKER",   Accent = new Color(0.84f, 0.05f, 0.10f), Hair = new Color(0.07f, 0.07f, 0.09f) },
-            new Character { Name = "SKULL",   Accent = new Color(0.95f, 0.72f, 0.10f), Hair = new Color(0.92f, 0.88f, 0.80f) },
-            new Character { Name = "MONA",    Accent = new Color(0.10f, 0.42f, 0.72f), Hair = new Color(0.18f, 0.20f, 0.26f) },
-            new Character { Name = "PANTHER", Accent = new Color(0.86f, 0.24f, 0.48f), Hair = new Color(0.78f, 0.62f, 0.24f) },
+            new Character { Name = "ARIA",  Accent = new Color(0.84f, 0.05f, 0.10f), Hair = new Color(0.07f, 0.07f, 0.09f) },
+            new Character { Name = "BOLT",  Accent = new Color(0.95f, 0.72f, 0.10f), Hair = new Color(0.92f, 0.88f, 0.80f) },
+            new Character { Name = "LYNX",  Accent = new Color(0.10f, 0.42f, 0.72f), Hair = new Color(0.18f, 0.20f, 0.26f) },
+            new Character { Name = "EMBER", Accent = new Color(0.86f, 0.24f, 0.48f), Hair = new Color(0.78f, 0.62f, 0.24f) },
         };
 
         static void BuildCutInScene()
@@ -190,7 +190,7 @@ namespace Waribashi.ScreenTransitions.Demo.EditorTools
                     new Vector2(-700f + i * 250f, -380f), new Vector2(230f, 64f), DemoUi.Panel);
             }
 
-            var allOut = DemoUi.CreateButton(canvas, "AllOutButton", "ALL-OUT ATTACK",
+            var chain = DemoUi.CreateButton(canvas, "ChainButton", "CHAIN CUT-IN",
                 new Vector2(-420f, -470f), new Vector2(440f, 64f), DemoUi.Accent);
 
             var fadeButton = DemoUi.CreateButton(canvas, "FadeButton", "FADE（全画面・対比用）",
@@ -215,7 +215,7 @@ namespace Waribashi.ScreenTransitions.Demo.EditorTools
             var controller = controllerGo.GetComponent<CutInDemoController>();
             controller.cutIns = cutIns;
             controller.cutInButtons = cutInButtons;
-            controller.allOutButton = allOut;
+            controller.chainButton = chain;
             controller.fadeButton = fadeButton;
             controller.fade = fade;
             controller.counterButton = counter;

@@ -18,7 +18,7 @@ namespace Waribashi.ScreenTransitions.Demo.CutIn
     /// </summary>
     public class CharacterCutIn : ObjectCurtain
     {
-        public string characterName = "JOKER";
+        public string characterName = "ARIA";
         public Color accentColor = new Color(0.84f, 0.05f, 0.10f);
         public Color hairColor = new Color(0.07f, 0.07f, 0.09f);
         public Color skinColor = new Color(0.98f, 0.86f, 0.74f);
