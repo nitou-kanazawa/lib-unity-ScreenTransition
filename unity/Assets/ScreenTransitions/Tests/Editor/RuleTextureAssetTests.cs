@@ -13,7 +13,27 @@ namespace Waribashi.ScreenTransitions.EditorTests
     /// </summary>
     public class RuleTextureAssetTests
     {
-        const string TextureDirectory = "Packages/com.waribashi.screen-transitions/Runtime/Textures";
+        /// <summary>
+        /// テクスチャの場所は固定しない。このパッケージは開発リポジトリでは Assets/ 配下、
+        /// 利用側では Packages/ 配下に置かれるため、パスを直書きすると片方で必ず落ちる。
+        /// このテストスクリプト自身の位置（&lt;pkg&gt;/Tests/Editor/）からパッケージルートを辿る。
+        /// </summary>
+        static string TextureDirectory
+        {
+            get
+            {
+                var guid = AssetDatabase.FindAssets($"{nameof(RuleTextureAssetTests)} t:MonoScript")
+                    .FirstOrDefault(g => Path.GetFileNameWithoutExtension(
+                        AssetDatabase.GUIDToAssetPath(g)) == nameof(RuleTextureAssetTests));
+                Assert.IsNotNull(guid, "テストスクリプト自身を AssetDatabase から解決できない");
+
+                var scriptPath = AssetDatabase.GUIDToAssetPath(guid);   // <pkg>/Tests/Editor/*.cs
+                var packageRoot = ParentOf(ParentOf(ParentOf(scriptPath)));
+                return packageRoot + "/Runtime/Textures";
+            }
+        }
+
+        static string ParentOf(string path) => Path.GetDirectoryName(path).Replace(Path.DirectorySeparatorChar, '/');
 
         static IEnumerable<string> RuleTexturePaths => AssetDatabase
             .FindAssets("t:Texture2D", new[] { TextureDirectory })

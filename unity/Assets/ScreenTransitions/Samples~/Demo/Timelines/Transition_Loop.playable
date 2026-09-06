@@ -14,14 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.TimelineAsset
   m_Version: 0
   m_Tracks:
-  - {fileID: 1596330204738990731}
+  - {fileID: 3237760298922845642}
   m_FixedDuration: 0
   m_EditorSettings:
     m_Framerate: 60
     m_ScenePreview: 1
   m_DurationMode: 0
   m_MarkerTrack: {fileID: 0}
---- !u!114 &1596330204738990731
+--- !u!114 &3237760298922845642
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
@@ -32,7 +32,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 66eab048bcabe4f47a86520be5f0a052, type: 3}
   m_Name: Transition Loop
-  m_EditorClassIdentifier: ScreenTransitions::ScreenTransitions.TransitionTrack
+  m_EditorClassIdentifier: Waribashi.ScreenTransitions::Waribashi.ScreenTransitions.TransitionTrack
   m_Version: 3
   m_AnimClip: {fileID: 0}
   m_Locked: 0
@@ -45,10 +45,10 @@ MonoBehaviour:
   - m_Version: 1
     m_Start: 0
     m_ClipIn: 0
-    m_Asset: {fileID: 7466644558149217637}
+    m_Asset: {fileID: 4827485109270918496}
     m_Duration: 1.4
     m_TimeScale: 1
-    m_ParentTrack: {fileID: 1596330204738990731}
+    m_ParentTrack: {fileID: 3237760298922845642}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
     m_BlendInDuration: -1
@@ -113,7 +113,7 @@ MonoBehaviour:
     m_DisplayName: Breath
   m_Markers:
     m_Objects: []
---- !u!114 &7466644558149217637
+--- !u!114 &4827485109270918496
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
@@ -124,7 +124,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6ad0524025fdcf84dba519c883eb0e83, type: 3}
   m_Name: TransitionClip
-  m_EditorClassIdentifier: ScreenTransitions::ScreenTransitions.TransitionClip
+  m_EditorClassIdentifier: Waribashi.ScreenTransitions::Waribashi.ScreenTransitions.TransitionClip
   template:
     from: 1
     to: 0.965

@@ -121,6 +121,7 @@ namespace Waribashi.ScreenTransitions.Demo.EditorTools
             var buttonTemplate = CreateButtonTemplate(gridGo.transform);
 
             // --- オブジェクト系トランジション ---
+            var fade = CreateObjectCurtain<FadeTransition>(canvasGo.transform, "Obj_Fade", "Fade");
             var stripe = CreateObjectCurtain<StripeSlideTransition>(canvasGo.transform, "Obj_StripeSlide", "Stripe Slide");
             var slab = CreateObjectCurtain<DiagonalSlabTransition>(canvasGo.transform, "Obj_DiagonalSlab", "Diagonal Slab");
             var tile = CreateObjectCurtain<TilePopTransition>(canvasGo.transform, "Obj_TilePop", "Tile Pop");
@@ -176,7 +177,7 @@ namespace Waribashi.ScreenTransitions.Demo.EditorTools
             controller.patterns = patterns;
             controller.objectTransitions = new ObjectCurtain[]
             {
-                stripe, slab, tile, slam, slat, spin, curtain, zigzag,
+                fade, stripe, slab, tile, slam, slat, spin, curtain, zigzag,
                 waveDive, boarding, depthGauge, bubbleBurst, sonar, periscope, deepFade, fishSchool, hatchSlam, depthZones,
                 townCrowd, subwayRide
             };
