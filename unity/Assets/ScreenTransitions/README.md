@@ -26,25 +26,34 @@ Package Manager の **Add package from git URL** に以下を入力します。
 https://github.com/nitou-kanazawa/lib-unity-ScreenTransition.git?path=unity/Assets/ScreenTransitions
 ```
 
+## 用語
+
+「蓋絵」= 画面を覆う物、を **Curtain** と呼びます。開ける / 閉じる以上の意味は持たせていません。
+
+| 型 | 役割 |
+|---|---|
+| `ICurtain` | 蓋絵の契約（`State` / `CloseAsync` / `OpenAsync`） |
+| `ObjectCurtain` | オブジェクトベース蓋絵の基底。素材レスで子要素を手続き生成する |
+| `RuleImageCurtain` | ルール画像ベース蓋絵の再生役。Timeline で `Cutoff` を駆動する |
+
 ## 使い方
 
 ```csharp
 using Waribashi.ScreenTransitions;
-using Waribashi.ScreenTransitions.Submarine;
 
 // 常駐サービス経由（DontDestroyOnLoad の最前面 Canvas を自動構築）
-var transition = ScreenTransitionService.Instance.Use<WaveDiveTransition>();
+var curtain = ScreenTransitionService.Instance.Use<FadeTransition>();
 
-await ScreenTransitionService.Instance.RunAsync(transition,
-    async ct => await SceneManager.LoadSceneAsync("Undersea").ToUniTask(cancellationToken: ct));
+await ScreenTransitionService.Instance.RunAsync(curtain,
+    async ct => await SceneManager.LoadSceneAsync("Next").ToUniTask(cancellationToken: ct));
 ```
 
 `RunAsync` は「閉じる → 処理 → 開く」の糖衣です。手で制御する場合は次のようになります。
 
 ```csharp
-await transition.CloseAsync();          // 完了時点で画面は完全に覆われている
-await LoadEverythingAsync();            // この間 HoldLoop が回り続ける
-await transition.OpenAsync();
+await curtain.CloseAsync();          // 完了時点で画面は完全に覆われている
+await LoadEverythingAsync();         // この間 HoldLoop が回り続ける
+await curtain.OpenAsync();
 ```
 
 ### ライフサイクル契約
@@ -58,44 +67,49 @@ Open(idle) <--完了-- Opening <--OpenAsync-- Closed
 - `Closed` 中は実装側の `HoldLoop` が自動で回り、`OpenAsync` で自動キャンセルされます
 - Busy（`Closing` / `Opening`）中の再入は無視されます
 - 時間はすべて `unscaledDeltaTime` 基準なので、`timeScale = 0` にしても完走します
-- **中断（`CancellationToken` のキャンセル、および例外）は必ず `Open` に着地します。**
-  中途姿勢の蓋は破棄されるので画面には何も残りません。`Closing` 中でも `Opening` 中でも同じです。
-  呼び出し側には `OperationCanceledException` がそのまま伝わります
+
+### 中断時の挙動（実装によって異なります）
+
+**`ObjectCurtain` 派生**は、中断（`CancellationToken` のキャンセル、および例外）が必ず `Open` に着地します。
+中途姿勢の蓋は破棄されるので画面には何も残りません。`Closing` 中でも `Opening` 中でも同じです。
+呼び出し側には `OperationCanceledException` がそのまま伝わります。
 
 ```csharp
 // 中断しても画面は必ず復帰する（蓋が残って操作不能になることはない）
 try
 {
-    await transition.RunAsync(LoadAsync, ct: token);
+    await curtain.RunAsync(LoadAsync, ct: token);
 }
 catch (OperationCanceledException)
 {
-    // この時点で transition.State == Open、画面には何も覆っていない
+    // この時点で curtain.State == Open、画面には何も覆っていない
 }
 ```
 
-## 同梱している遷移
+**`RuleImageCurtain` は未対応です。** `OpenAsync` のキャンセル時は `Closed` に戻り、ループを再開します。
+`ICurtain` 越しに扱うコードで両者を混ぜる場合、中断後の状態が実装によって変わる点に注意してください。
+
+## 同梱している蓋絵
 
 ### ルール画像系（シェーダー + Timeline 駆動）
 
-`TransitionImage` + `TransitionPlayer`。ルール画像 12 種を同梱し、`Tools/Screen Transitions/Generate Rule Textures` で再生成できます。パターン追加はルール画像 1 枚を足すだけです。
+`TransitionImage` + `RuleImageCurtain`。ルール画像 12 種を同梱し、`Tools/Screen Transitions/Generate Rule Textures` で再生成できます。パターン追加はルール画像 1 枚を足すだけです。
 
 ### オブジェクト系（UniTask 駆動、素材レス）
 
-`ObjectTransition` 派生の 20 種。子要素は初回再生時に手続き生成するため、アートアセットを必要としません。
+`ObjectCurtain` 派生の汎用 9 種。子要素は初回再生時に手続き生成するため、アートアセットを必要としません。
 
-| カテゴリ | 遷移 |
-|---|---|
-| 汎用 | StripeSlide / DiagonalSlab / TilePop / SplitSlam / SlatFlip / SpinSquare / CurtainDrop / ZigzagWipe |
-| 潜水艦テーマ | WaveDive / SubBoarding / DepthGauge / BubbleBurst / SonarPing / PeriscopeIris / DeepFade / FishSchool / HatchSlam / DepthZones |
-| 没入系 | TownCrowd / SubwayRide |
+Fade / StripeSlide / DiagonalSlab / TilePop / SplitSlam / SlatFlip / SpinSquare / CurtainDrop / ZigzagWipe
+
+テーマ性の強い蓋絵（潜水艦 10 種・没入系 2 種）は本体には含めず、**サンプルとして同梱**しています。
+そのまま使うより、実装例として読んで自分のテーマに置き換えることを想定しています。
 
 ## 独自の蓋絵を作る
 
-`ObjectTransition` を継承し、3 メソッドを実装します。
+`ObjectCurtain` を継承し、3 メソッドを実装します。
 
 ```csharp
-public class MyTransition : ObjectTransition
+public class MyCurtain : ObjectCurtain
 {
     protected override void Build() { /* 子要素を手続き生成 */ }
 
@@ -110,19 +124,24 @@ public class MyTransition : ObjectTransition
 }
 ```
 
-基底が担保するもの: 状態管理 / `CanvasGroup` によるレイキャスト制御 / `HoldLoop` の起動とキャンセル / `Tween`・`Ease`・`ProceduralSprites` などのヘルパー。
+基底が担保するもの: 状態管理 / 中断時の `Open` への復帰 / `CanvasGroup` によるレイキャスト制御 /
+`HoldLoop` の起動とキャンセル / `Tween`・`Ease`・`ProceduralSprites` などのヘルパー。
 
 ## サンプル
 
-Package Manager の本パッケージのページから **Samples > Demo > Import** で、全遷移を一覧できるデモシーン 2 本とビルダーを取り込めます。
+Package Manager の本パッケージのページから **Samples > Demo > Import** で取り込めます。内容は次のとおりです。
+
+- 全蓋絵を一覧できるデモシーン 2 本（`TransitionDemo` / `TransitionUndersea`）とシーンビルダー
+- テーマ固有の蓋絵 12 種 — 潜水艦 10 種（WaveDive, SonarPing, PeriscopeIris ほか）、没入系 2 種（TownCrowd, SubwayRide）
 
 ## テスト
 
-`Tests/Runtime`（PlayMode）と `Tests/Editor`（EditMode）を同梱しています。PlayMode 側は `ObjectTransition` の全派生型を反射で列挙してライフサイクル契約を検証するため、遷移を追加すると自動的に対象になります。
+`Tests/Runtime`（PlayMode）と `Tests/Editor`（EditMode）を同梱しています。
+PlayMode 側は `ObjectCurtain` の派生型を反射で列挙してライフサイクル契約を検証するため、蓋絵を追加すると自動的に対象になります。
+列挙はロード済みアセンブリ全体を走査するので、**サンプル側やプロジェクト側で定義した蓋絵も同じ契約テストにかかります**。
 
 Git URL などで導入した（= 変更不可な）パッケージのテストは、既定では Test Runner に出ません。
 出したい場合はプロジェクトの `Packages/manifest.json` に次を追加してください。
-`Packages/` 直下に置いた埋め込みパッケージの場合は、この指定なしで自動的に認識されます。
 
 ```json
 "testables": [ "com.waribashi.screen-transitions" ]

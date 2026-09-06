@@ -7,7 +7,7 @@ namespace Waribashi.ScreenTransitions
     /// 段々の横バーが左右交互にスライドして蓋を閉じる。
     /// 各バーの先頭にアクセントカラーのエッジが付く。
     /// </summary>
-    public class StripeSlideTransition : ObjectTransition
+    public class StripeSlideTransition : ObjectCurtain
     {
         [SerializeField] int barCount = 6;
         [SerializeField] Color barColor = new Color(0.06f, 0.08f, 0.13f);

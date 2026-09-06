@@ -7,7 +7,7 @@ namespace Waribashi.ScreenTransitions
     /// 縦バーが上から落下してバウンドしながら画面を埋める。
     /// 開きはそのまま下へ落ちて抜けていく。
     /// </summary>
-    public class CurtainDropTransition : ObjectTransition
+    public class CurtainDropTransition : ObjectCurtain
     {
         [SerializeField] int barCount = 7;
         [SerializeField] Color barColor = new Color(0.06f, 0.08f, 0.13f);

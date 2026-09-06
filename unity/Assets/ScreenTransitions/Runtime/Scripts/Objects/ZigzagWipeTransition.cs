@@ -7,7 +7,7 @@ namespace Waribashi.ScreenTransitions
     /// ギザギザの刃先を持つパネルが右から左へ横切るワイプ。
     /// アクセント色のギザギザ層が少し先行して縁取りになる。
     /// </summary>
-    public class ZigzagWipeTransition : ObjectTransition
+    public class ZigzagWipeTransition : ObjectCurtain
     {
         [SerializeField] int teethCount = 9;
         [SerializeField] Color mainColor = new Color(0.05f, 0.055f, 0.08f);

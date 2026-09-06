@@ -1,0 +1,25 @@
+{
+    "name": "Waribashi.ScreenTransitions.Demo.EditorTests",
+    "rootNamespace": "Waribashi.ScreenTransitions.Demo.EditorTests",
+    "references": [
+        "Waribashi.ScreenTransitions",
+        "Waribashi.ScreenTransitions.Demo",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

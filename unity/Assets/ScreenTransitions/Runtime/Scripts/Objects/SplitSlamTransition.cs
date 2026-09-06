@@ -8,7 +8,7 @@ namespace Waribashi.ScreenTransitions
     /// <summary>
     /// 上下のパネルが勢いよく閉じ、衝突時にアクセントラインのフラッシュと画面シェイクが入る。
     /// </summary>
-    public class SplitSlamTransition : ObjectTransition
+    public class SplitSlamTransition : ObjectCurtain
     {
         [SerializeField] Color panelColor = new Color(0.045f, 0.05f, 0.07f);
         [SerializeField] Color accentColor = new Color(1f, 0.62f, 0.24f);

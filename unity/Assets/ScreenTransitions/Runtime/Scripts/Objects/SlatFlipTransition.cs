@@ -7,7 +7,7 @@ namespace Waribashi.ScreenTransitions
     /// 縦スラットが左から順に横スケールで展開して画面を埋める。
     /// 2トーンの交互配色で奥行きを出す。
     /// </summary>
-    public class SlatFlipTransition : ObjectTransition
+    public class SlatFlipTransition : ObjectCurtain
     {
         [SerializeField] int slatCount = 8;
         [SerializeField] Color colorA = new Color(0.06f, 0.07f, 0.10f);

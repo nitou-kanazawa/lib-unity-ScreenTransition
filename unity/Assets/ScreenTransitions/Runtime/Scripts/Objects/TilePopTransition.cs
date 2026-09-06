@@ -6,7 +6,7 @@ namespace Waribashi.ScreenTransitions
     /// <summary>
     /// タイルが斜めの波＋ランダムゆらぎで OutBack ポップしながら画面を埋める。
     /// </summary>
-    public class TilePopTransition : ObjectTransition
+    public class TilePopTransition : ObjectCurtain
     {
         [SerializeField] int cols = 10;
         [SerializeField] int rows = 6;

@@ -12,7 +12,7 @@ namespace Waribashi.ScreenTransitions
     ///
     /// 典型的な利用:
     /// <code>
-    /// var t = ScreenTransitionService.Instance.Use&lt;WaveDiveTransition&gt;();
+    /// var t = ScreenTransitionService.Instance.Use&lt;FadeTransition&gt;();
     /// await ScreenTransitionService.Instance.RunAsync(t,
     ///     async ct => await SceneManager.LoadSceneAsync("Undersea").ToUniTask(cancellationToken: ct));
     /// </code>
@@ -68,7 +68,7 @@ namespace Waribashi.ScreenTransitions
         }
 
         /// <summary>指定型のトランジションを常駐 Canvas 上に取得（無ければ生成）する。</summary>
-        public T Use<T>() where T : ObjectTransition
+        public T Use<T>() where T : ObjectCurtain
         {
             var existing = _layer.GetComponentInChildren<T>(true);
             if (existing != null)
@@ -82,12 +82,12 @@ namespace Waribashi.ScreenTransitions
         }
 
         /// <summary>閉じ → work（ローディング表示 + HoldLoop）→ 開き。</summary>
-        public UniTask RunAsync(IScreenTransition transition,
+        public UniTask RunAsync(ICurtain curtain,
             Func<CancellationToken, UniTask> work,
             bool showLoading = true,
             CancellationToken ct = default)
         {
-            return transition.RunAsync(work, showLoading ? _loading : null, ct);
+            return curtain.RunAsync(work, showLoading ? _loading : null, ct);
         }
 
         static void Stretch(RectTransform rt)

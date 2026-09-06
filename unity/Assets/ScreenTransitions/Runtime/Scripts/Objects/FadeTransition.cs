@@ -7,7 +7,7 @@ namespace Waribashi.ScreenTransitions
     /// <summary>
     /// 最もシンプルな単色フェード。シーン遷移の既定の蓋絵として使う想定。
     /// </summary>
-    public class FadeTransition : ObjectTransition
+    public class FadeTransition : ObjectCurtain
     {
         [SerializeField] Color color = Color.black;
         [SerializeField] float closeDuration = 0.35f;

@@ -6,7 +6,10 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Demo/Scenes/DemoScene.unity
-    guid: 2c1e736a4e934ea4e98cf90fd39bb478
+    path: Assets/Demo/TransitionDemo.unity
+    guid: f24c47b4da9609d4289b150859ccda1d
+  - enabled: 1
+    path: Assets/Demo/TransitionUndersea.unity
+    guid: 4216f69451a99844ebcb67748301d061
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

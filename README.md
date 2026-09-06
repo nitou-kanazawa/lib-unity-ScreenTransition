@@ -8,17 +8,18 @@ Unity 向けの画面遷移（蓋絵）ライブラリです。ルール画像�
 UniTask の `async`/`await` で統一的に扱えます。蓋が閉じ切っている間はループアニメが自動で回るため、
 シーンロード中に画面が静止しません。
 
-収録パッケージ:
+リポジトリの構成:
 
 | パッケージ | パス | 内容 |
 |---|---|---|
-| `com.waribashi.screen-transitions` | `unity/Assets/ScreenTransitions` | 画面遷移本体 |
+| `com.waribashi.screen-transitions` | `unity/Assets/ScreenTransitions` | パッケージ本体 |
+| （サンプル） | `unity/Assets/Demo` | デモシーンとテーマ固有の蓋絵。リリース時に本体の `Samples~/Demo` へ同期される |
 
 ## 特徴
 
-- `IScreenTransition`（`CloseAsync` / `OpenAsync` / `RunAsync`）による統一 API
-- 遷移 32 種を同梱（ルール画像 12 種 + オブジェクト系 20 種）。オブジェクト系は素材レス
-- 中断（キャンセル・例外）は必ず「蓋が開いた状態」に着地する。画面が覆われたまま固まらない
+- `ICurtain`（`CloseAsync` / `OpenAsync` / `RunAsync`）による統一 API
+- 蓋絵を 21 種同梱（ルール画像 12 種 + 素材レスのオブジェクト系 9 種）。テーマ固有の 12 種はサンプル同梱
+- `ObjectCurtain` 派生は中断（キャンセル・例外）が必ず「蓋が開いた状態」に着地する。画面が覆われたまま固まらない
 - 時間は `unscaledDeltaTime` 基準なので `timeScale = 0` でも完走する
 - Timeline カスタムトラック対応
 

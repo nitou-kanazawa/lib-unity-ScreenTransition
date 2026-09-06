@@ -5,9 +5,35 @@
 
 ## [Unreleased]
 
+### 破壊的変更
+
+- 蓋絵の契約と基底クラスを Curtain 系にリネームした。「画面を覆う物」という以上の意味を
+  型名に持たせないため。パッケージ名・namespace・アセンブリ名は `ScreenTransitions` のまま
+  - `IScreenTransition` → `ICurtain`
+  - `TransitionState` → `CurtainState`
+  - `ScreenTransitionExtensions` → `CurtainExtensions`
+  - `ObjectTransition` → `ObjectCurtain`
+  - `TransitionPlayer` → `RuleImageCurtain`
+  - 個別の蓋絵（`FadeTransition` 等）の型名は据え置き。`Curtain` は覆う仕組み、
+    `Transition` は個々の演出、という粒度で使い分ける
+- テーマ固有の蓋絵 12 種をパッケージ本体から外し、サンプルへ移した（**要 Samples の Import**）
+  - 潜水艦 10 種（`WaveDiveTransition` ほか）、没入系 2 種（`TownCrowdTransition` /
+    `SubwayRideTransition`）と、それらだけが使う `SilhouetteFactory`
+  - namespace も `Waribashi.ScreenTransitions.Demo.Submarine` /
+    `.Demo.Immersive` へ移動。サンプルがライブラリの namespace に型を生やさないようにするため
+  - 本体に残るのは汎用 9 種とルール画像 12 種。ランタイムのコード量は約 3,700 行から約 1,800 行に
+
+### 変更
+
+- 契約テストの型の列挙を、自アセンブリ限定からロード済みアセンブリ全体の走査に変更した。
+  テーマ固有の蓋絵が別アセンブリへ移ったことで、対象が「減るだけで赤くならない」形で
+  取りこぼされるのを防ぐため。サンプル側とプロジェクト側の蓋絵も同じ契約テストにかかる
+- README の中断時の挙動の記述を修正。「必ず `Open` に着地する」は `ObjectCurtain` のみの
+  保証であり、`RuleImageCurtain` は `Closed` に戻る。契約として断言していたのを実装別に書き分けた
+
 ### 修正
 
-- 中断（キャンセル・例外）時に蓋が画面に残る問題を修正。`ObjectTransition` の中断復帰を
+- 中断（キャンセル・例外）時に蓋が画面に残る問題を修正。`ObjectCurtain` の中断復帰を
   「常に `Open` へ着地する」方式に統一した。中途姿勢の子要素を破棄し、`Build()` を
   やり直せる状態に戻してルートを非アクティブにする
   - 以前は `CloseAsync` のキャンセル時に `State` だけ `Open` に戻し、子要素は中途姿勢のまま
@@ -21,8 +47,8 @@
 ### 未対応
 
 - ライセンス未設定（`package.json` の `license` と `LICENSE.md`）
-- `TransitionPlayer`（Timeline 系）と `ScreenTransitionService` にテストが無い。
-  上記の中断復帰は `ObjectTransition` のみで、`TransitionPlayer` は未対応
+- `RuleImageCurtain`（Timeline 系）と `ScreenTransitionService` にテストが無い。
+  上記の中断復帰は `ObjectCurtain` のみで、`RuleImageCurtain` は未対応
 - 「`CloseAsync` 完了時点で画面が完全に覆われている」ことのピクセル単位の検証が無い
 
 ## [0.1.0] - 2026-07-30
@@ -31,13 +57,13 @@
 
 ### 追加
 
-- `IScreenTransition`（`State` + `CloseAsync` / `OpenAsync`）と `RunAsync` 拡張メソッドによる統一 API
-- ルール画像系: `UIRuleTransition` シェーダー / `TransitionImage` / `TransitionPlayer` / Timeline カスタムトラック、ルール画像 12 種
+- `ICurtain`（`State` + `CloseAsync` / `OpenAsync`）と `RunAsync` 拡張メソッドによる統一 API
+- ルール画像系: `UIRuleTransition` シェーダー / `TransitionImage` / `RuleImageCurtain` / Timeline カスタムトラック、ルール画像 12 種
 - ルール画像の手続き生成ツール（`Tools/Screen Transitions/Generate Rule Textures`）
-- オブジェクト系: `ObjectTransition` 基底と遷移 20 種（汎用 8 / 潜水艦テーマ 10 / 没入系 2）
+- オブジェクト系: `ObjectCurtain` 基底と遷移 20 種（汎用 8 / 潜水艦テーマ 10 / 没入系 2）
 - `Closed` 中に自動再生される `HoldLoop`（DeepFade / SonarPing / SplitSlam / SubwayRide / TownCrowd / WaveDive が実装）
 - `ScreenTransitionService`（DontDestroyOnLoad 常駐 Canvas + `Use<T>()`）と `LoadingIndicator`
 - 素材レスで演出を組むための `ProceduralSprites` / `SilhouetteFactory` / `Ease`
 - アセンブリ定義の分離（`ScreenTransitions` / `.Editor` / `.Tests` / `.EditorTests`）
-- テスト 178 件: `ObjectTransition` 全派生型のライフサイクル契約 106 件（PlayMode）、
+- テスト 178 件: `ObjectCurtain` 全派生型のライフサイクル契約 106 件（PlayMode）、
   Ease / ProceduralSprites / ルール画像アセットの検証 72 件（EditMode）

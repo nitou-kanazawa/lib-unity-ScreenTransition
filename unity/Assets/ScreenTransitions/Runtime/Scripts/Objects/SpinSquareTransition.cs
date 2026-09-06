@@ -7,7 +7,7 @@ namespace Waribashi.ScreenTransitions
     /// 回転しながら拡大する巨大な正方形が画面を飲み込む。
     /// アクセント色の正方形が一歩先行し、縁取りとして見える二層構成。
     /// </summary>
-    public class SpinSquareTransition : ObjectTransition
+    public class SpinSquareTransition : ObjectCurtain
     {
         [SerializeField] Color mainColor = new Color(0.05f, 0.055f, 0.08f);
         [SerializeField] Color accentColor = new Color(1f, 0.62f, 0.24f);

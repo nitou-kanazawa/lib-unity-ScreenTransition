@@ -6,7 +6,7 @@ namespace Waribashi.ScreenTransitions
     /// <summary>
     /// 斜めに傾いた2枚のスラブ（アクセント色 → 本体色）が時間差で横切る二段ワイプ。
     /// </summary>
-    public class DiagonalSlabTransition : ObjectTransition
+    public class DiagonalSlabTransition : ObjectCurtain
     {
         [SerializeField] Color mainColor = new Color(0.04f, 0.045f, 0.06f);
         [SerializeField] Color accentColor = new Color(1f, 0.62f, 0.24f);
