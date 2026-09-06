@@ -54,13 +54,13 @@ namespace Waribashi.ScreenTransitions
             try
             {
                 await PlayOnce(closeTimeline, 1f, ct);
+                _completeRequested = false;
                 State = CurtainState.Closed;
                 StartLoop();
             }
-            catch (OperationCanceledException)
+            catch
             {
-                if (this != null)
-                    State = CurtainState.Open;
+                ResetToOpen();
                 throw;
             }
         }
@@ -76,17 +76,38 @@ namespace Waribashi.ScreenTransitions
             try
             {
                 await PlayOnce(openTimeline, 0f, ct);
+                _completeRequested = false;
                 State = CurtainState.Open;
             }
-            catch (OperationCanceledException)
+            catch
             {
-                if (this != null)
-                {
-                    State = CurtainState.Closed;
-                    StartLoop();
-                }
+                ResetToOpen();
                 throw;
             }
+        }
+
+        /// <summary>
+        /// 中断（キャンセル・例外）時に「何も覆っていない Open」へ確実に戻す。
+        ///
+        /// 以前は CloseAsync のキャンセルで State だけ Open に戻し、Cutoff は中途の値のまま
+        /// 残していた。画面が半分覆われたまま「開いている」と主張する状態になる。
+        /// OpenAsync のキャンセルは Closed へ戻していたので、ObjectCurtain と着地先も食い違っていた。
+        /// どちらも Open に揃え、Cutoff を 0 に落として何も残さない。
+        /// </summary>
+        void ResetToOpen()
+        {
+            // 破棄によるキャンセルではもう触れない
+            if (this == null)
+                return;
+
+            if (_director != null)
+                _director.Stop();
+
+            if (target != null)
+                target.Cutoff = 0f;
+
+            _completeRequested = false;
+            State = CurtainState.Open;
         }
 
         /// <summary>

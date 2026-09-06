@@ -7,6 +7,23 @@
 
 ### 破壊的変更
 
+- `RunAsync` と `ScreenTransitionService.Loading` が具象クラス `LoadingIndicator` に
+  依存していたのを `ILoadingIndicator`（`Show()` / `Hide()` だけ）に変えた。
+  見た目はゲームごとに違うので、コア側が特定の実装に縛られるべきではないため
+  - `LoadingIndicator` は既定の実装として残る。`Loading` に set すれば差し替えられる
+  - **既定の実装は遅延生成になった。** 従来は常駐 Canvas と一緒に必ず作られていたので、
+    ロードを挟まないアプリ（カットインしか使わない等）にも付いてきていた
+  - インターフェース型で受けた MonoBehaviour は破棄後も `!= null` が true になるため、
+    `ILoadingIndicator.IsAlive()` で判定してから呼ぶようにした
+- `ScreenTransitionService` に `Create<T>()` / `Adopt()` / `Layer` を追加した
+  - `Use<T>()` は型ごとのシングルトンなので、キャラクターごとのカットインのように
+    同じ型を同時に複数出せなかった。`Create<T>()` は呼ぶたびに新しく作る
+  - `Adopt()` は外で用意した蓋絵を常駐レイヤーへ移す。`RuleImageCurtain` は Timeline アセットと
+    `TransitionImage` の参照が要りコードから組み立てられないため、常駐サービスに乗せられなかった
+  - `Layer` を公開した。子の並び順がそのまま描画順なので、蓋絵どうしの重ね順を決められる
+- 中断時に必ず `Open` へ着地することを `ICurtain` の契約に格上げした（従来は
+  `ObjectCurtain` だけの性質）
+
 - `ICurtain` に `bool Complete()` を追加した（**試作**。仕様は確定していない）。
   実行中のフェーズを終端まで早送りする。キャンセルとは向きが逆で、巻き戻さずに最後まで進める
   - `Closing` 中なら `Closed`、`Opening` 中なら `Open` へ、残りのアニメを待たずに着地する
@@ -67,6 +84,17 @@
   保証であり、`RuleImageCurtain` は `Closed` に戻る。契約として断言していたのを実装別に書き分けた
 
 ### 修正
+
+- `RuleImageCurtain` の中断復帰を修正した。`ObjectCurtain` と着地先が食い違っていた
+  - `CloseAsync` のキャンセル時、`State` だけ `Open` に戻して `Cutoff` は中途の値のまま
+    残していた。画面が半分覆われたまま「開いている」と主張する状態になる
+  - `OpenAsync` のキャンセル時は `Closed` へ戻してループを再開していた。
+    同じ `ICurtain` 越しに扱うと、中断後の状態が実装によって変わり事故る
+  - `OperationCanceledException` 以外の例外では `Closing` / `Opening` のまま固まり、
+    以降のすべての呼び出しが無視されていた
+  - いずれも `Open` へ着地させ、`Cutoff` を 0 に落として何も残さないようにした
+- `RuleImageCurtain` にテストが無かったのを解消した。Timeline をアセット化せずメモリ上に
+  組んで、ライフサイクル・中断・早送り・再入を検証する 7 件を追加（上記の修正の回帰テストでもある）
 
 - ルール画像アセットのテストがパッケージのパスを直書きしていたため、移設後に 4 件が落ちていた
   のを修正。テストスクリプト自身の位置からパッケージルートを辿るようにし、`Assets/` 配下でも

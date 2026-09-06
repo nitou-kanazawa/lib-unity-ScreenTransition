@@ -5,9 +5,10 @@ namespace Waribashi.ScreenTransitions
 {
     /// <summary>
     /// 蓋が閉じている間に表示するローディング演出（スピナー + NOW LOADING テキスト）。
+    /// ILoadingIndicator の既定の実装。見た目を変えたい場合は自前の実装に差し替える。
     /// 子要素は初回 Show 時に手続き生成する。トランジションより前面に配置すること。
     /// </summary>
-    public class LoadingIndicator : MonoBehaviour
+    public class LoadingIndicator : MonoBehaviour, ILoadingIndicator
     {
         [SerializeField] Color color = new Color(1f, 1f, 1f, 0.9f);
         [SerializeField] int dotCount = 10;

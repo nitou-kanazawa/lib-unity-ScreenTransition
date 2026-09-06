@@ -51,7 +51,7 @@ await ScreenTransitionService.Instance.RunAsync(curtain,
 `RunAsync` は「閉じる → 処理 → 開く」の糖衣です。手で制御する場合は次のようになります。
 
 ```csharp
-await curtain.CloseAsync();          // 完了時点で画面は完全に覆われている
+await curtain.CloseAsync();          // 完了時点で蓋は閉じ切っている
 await LoadEverythingAsync();         // この間 HoldLoop が回り続ける
 await curtain.OpenAsync();
 ```
@@ -68,6 +68,7 @@ Open(idle) <--完了-- Opening <--OpenAsync-- Closed
 - Busy（`Closing` / `Opening`）中の再入は無視されます
 - 時間はすべて `unscaledDeltaTime` 基準なので、`timeScale = 0` にしても完走します
 - 再生中および `Closed` 中は下位 UI へのレイキャストを遮断します（`BlocksRaycasts` で opt-out 可）
+- 中断（キャンセル・例外）は必ず `Open` に着地し、画面に何も残しません（後述）
 
 ### 覆う範囲は契約に含みません
 
@@ -107,9 +108,9 @@ await closing;        // すぐ返る。State は Closed
 
 「どのボタンでスキップか」はアプリ側の責務です。ライブラリは `Complete()` を公開するだけで、入力には触れません。
 
-### 中断時の挙動（実装によって異なります）
+### 中断時の挙動
 
-**`ObjectCurtain` 派生**は、中断（`CancellationToken` のキャンセル、および例外）が必ず `Open` に着地します。
+**中断（`CancellationToken` のキャンセル、および例外）は必ず `Open` に着地します。**
 中途姿勢の蓋は破棄されるので画面には何も残りません。`Closing` 中でも `Opening` 中でも同じです。
 呼び出し側には `OperationCanceledException` がそのまま伝わります。
 
@@ -125,8 +126,35 @@ catch (OperationCanceledException)
 }
 ```
 
-**`RuleImageCurtain` は未対応です。** `OpenAsync` のキャンセル時は `Closed` に戻り、ループを再開します。
-`ICurtain` 越しに扱うコードで両者を混ぜる場合、中断後の状態が実装によって変わる点に注意してください。
+これは `ICurtain` の契約です。自前で実装する場合も守ってください。中途の姿勢で止まると、
+利用側は状態不一致で `CloseAsync` も `OpenAsync` も弾かれ、画面を復帰できなくなります。
+
+## 常駐サービス
+
+`ScreenTransitionService` は、シーンを跨いで生きる Canvas（最前面・`DontDestroyOnLoad`）を自前で構築します。
+
+| API | 用途 |
+|---|---|
+| `Use<T>()` | 型ごとに 1 つを共有する。全画面の蓋絵など、同時に 1 つあれば足りるもの |
+| `Create<T>()` | 呼ぶたびに新しく作る。同じ型を同時に複数出す場合（キャラクターごとのカットインなど） |
+| `Adopt(curtain)` | 外で用意した蓋絵をレイヤーへ移す。`RuleImageCurtain` のようにコードから組み立てられないもの |
+| `Layer` | 蓋絵を載せるレイヤー。子の並び順がそのまま描画順（後ろの子ほど手前） |
+| `Loading` | 閉じ切っている間の表示 |
+
+`Use<T>` と `Create<T>` は手続き生成できる `ObjectCurtain` 専用です。
+`RuleImageCurtain` は Timeline アセットと `TransitionImage` の参照が要るので、
+プレハブから生成したものを `Adopt` に渡してください。
+
+### ローディング表示の差し替え
+
+`Loading` の型は `ILoadingIndicator`（`Show()` / `Hide()` だけ）です。
+同梱の `LoadingIndicator`（スピナー + NOW LOADING）は既定の実装にすぎません。
+
+```csharp
+ScreenTransitionService.Instance.Loading = myIndicator;   // ILoadingIndicator を実装した何か
+```
+
+**ロードを挟まないアプリでは何も作られません。** 既定の実装は `Loading` に初めて触れたときに生成されます。
 
 ## 同梱している蓋絵
 
@@ -211,6 +239,9 @@ Package Manager の本パッケージのページから **Samples > Demo > Impor
 `Tests/Runtime`（PlayMode）と `Tests/Editor`（EditMode）を同梱しています。
 PlayMode 側は `ObjectCurtain` の派生型を反射で列挙してライフサイクル契約を検証するため、蓋絵を追加すると自動的に対象になります。
 列挙はロード済みアセンブリ全体を走査するので、**サンプル側やプロジェクト側で定義した蓋絵も同じ契約テストにかかります**。
+
+`RuleImageCurtain` は Timeline アセットと `TransitionImage` の参照が要るため反射での列挙に乗りません。
+Timeline をメモリ上に組んで検証する専用のテストを別に持っています。
 
 Git URL などで導入した（= 変更不可な）パッケージのテストは、既定では Test Runner に出ません。
 出したい場合はプロジェクトの `Packages/manifest.json` に次を追加してください。
