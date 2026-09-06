@@ -188,10 +188,23 @@ await ScreenTransitionService.Instance.Use<CharacterCutIn>().RunAsync(0.25f);
 
 ## サンプル
 
-Package Manager の本パッケージのページから **Samples > Demo > Import** で取り込めます。内容は次のとおりです。
+Package Manager の本パッケージのページから **Samples > Demo > Import** で取り込めます。
+`DemoHub` シーンを開くと、各デモへ移動できます。
 
-- 全蓋絵を一覧できるデモシーン 2 本（`TransitionDemo` / `TransitionUndersea`）とシーンビルダー
+| シーン | 内容 |
+|---|---|
+| `DemoHub` | 入口。各デモへ蓋絵を挟んで遷移する |
+| `TransitionDemo` | 同梱している蓋絵をボタンで一覧再生。実シーンロード（`TransitionUndersea`）もここから |
+| `CutInDemo` | キャラクターカットイン。画面の一部しか覆わない蓋絵と、全画面の蓋絵の対比 |
+| `InterruptDemo` | キャンセル（巻き戻し）と `Complete()`（早送り）の違いを State とログで見る |
+| `LoadingDemo` | 蓋絵の裏で重い処理を回す。`HoldLoop` とローディング表示、`timeScale = 0` での完走 |
+
+同梱するコードは次のとおりです。
+
 - テーマ固有の蓋絵 12 種 — 潜水艦 10 種（WaveDive, SonarPing, PeriscopeIris ほか）、没入系 2 種（TownCrowd, SubwayRide）
+- `CharacterCutIn` — 画面の一部しか覆わない蓋絵の実装例（`BlocksRaycasts = false`、`Mask` で顔を帯に切り抜く）
+- シーンビルダー（`Tools > Screen Transitions > Build Demo Scenes`）。デモシーンはアセットとして手で組まず、
+  すべてコードから生成している。差分がレビューでき、蓋絵を足したときに作り直せることを優先している
 
 ## テスト
 

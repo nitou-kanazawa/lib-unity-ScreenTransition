@@ -6,8 +6,20 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Demo/DemoHub.unity
+    guid: 2cf1a5a206a7bc94ab3ca18e67818cad
+  - enabled: 1
     path: Assets/Demo/TransitionDemo.unity
     guid: f24c47b4da9609d4289b150859ccda1d
+  - enabled: 1
+    path: Assets/Demo/CutInDemo.unity
+    guid: a1351a705d825ac4792e9ea17e0e0079
+  - enabled: 1
+    path: Assets/Demo/InterruptDemo.unity
+    guid: 33d31d3fe7d80b842af341fe061742da
+  - enabled: 1
+    path: Assets/Demo/LoadingDemo.unity
+    guid: e4cea3f99c491ee44a215a3b91b908a7
   - enabled: 1
     path: Assets/Demo/TransitionUndersea.unity
     guid: 4216f69451a99844ebcb67748301d061

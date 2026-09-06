@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
@@ -9,14 +10,12 @@ using UnityEditor.SceneManagement;
 namespace Waribashi.ScreenTransitions.Demo.EditorTests
 {
     /// <summary>
-    /// デモシーンが全蓋絵を網羅しているかを検証する。
+    /// デモが全蓋絵を網羅しているかを検証する。
     /// 「新しい蓋絵を実装したがデモに追加し忘れた」「ビルダーは直したがシーンを再生成していない」を
     /// 機械的に検出するのが目的。種類が増えるほど価値が上がる。
     /// </summary>
     public class DemoCoverageTests
     {
-        const string DemoSceneName = "TransitionDemo";
-
         /// <summary>
         /// 具体的な蓋絵すべて。パッケージ本体とサンプルで別アセンブリに分かれているため、
         /// ロード済みアセンブリ全体を走査する。
@@ -50,40 +49,55 @@ namespace Waribashi.ScreenTransitions.Demo.EditorTests
         /// シーンのパスは固定しない。Samples~ として配布したあと利用側が
         /// Assets/Samples/&lt;pkg&gt;/&lt;ver&gt;/Demo/ に取り込んでも、そのまま動くようにするため。
         /// </summary>
-        static string ResolveDemoScenePath()
+        static string ResolveScenePath(string sceneName)
         {
-            var guid = AssetDatabase.FindAssets($"{DemoSceneName} t:SceneAsset")
-                .FirstOrDefault(g => System.IO.Path.GetFileNameWithoutExtension(
-                    AssetDatabase.GUIDToAssetPath(g)) == DemoSceneName);
+            var guid = AssetDatabase.FindAssets(sceneName + " t:SceneAsset")
+                .FirstOrDefault(g => Path.GetFileNameWithoutExtension(
+                    AssetDatabase.GUIDToAssetPath(g)) == sceneName);
+
             return string.IsNullOrEmpty(guid) ? null : AssetDatabase.GUIDToAssetPath(guid);
         }
 
         [Test]
-        public void DemoScene_ContainsEveryObjectCurtain()
+        public void EveryDemoScene_Exists()
         {
-            var scenePath = ResolveDemoScenePath();
-            Assert.IsNotNull(scenePath,
-                $"{DemoSceneName}.unity が見つからない。Tools/Screen Transitions/Build Demo Scene で生成すること");
+            var missing = DemoScenes.All.Where(name => ResolveScenePath(name) == null).ToArray();
 
+            Assert.IsEmpty(missing,
+                "デモシーンが見つからない（Tools/Screen Transitions/Build Demo Scenes で生成すること）: "
+                + string.Join(", ", missing));
+        }
+
+        [Test]
+        public void DemoScenes_ContainEveryObjectCurtain()
+        {
             var found = new HashSet<Type>();
-            var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
-            try
+
+            foreach (var sceneName in DemoScenes.All)
             {
-                foreach (var root in scene.GetRootGameObjects())
+                var path = ResolveScenePath(sceneName);
+                if (path == null)
+                    continue;   // 欠落は EveryDemoScene_Exists が報告する
+
+                var scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
+                try
                 {
-                    foreach (var curtain in root.GetComponentsInChildren<ObjectCurtain>(true))
-                        found.Add(curtain.GetType());
+                    foreach (var root in scene.GetRootGameObjects())
+                    {
+                        foreach (var curtain in root.GetComponentsInChildren<ObjectCurtain>(true))
+                            found.Add(curtain.GetType());
+                    }
                 }
-            }
-            finally
-            {
-                EditorSceneManager.CloseScene(scene, true);
+                finally
+                {
+                    EditorSceneManager.CloseScene(scene, true);
+                }
             }
 
             var missing = ConcreteCurtainTypes.Where(t => !found.Contains(t)).Select(t => t.Name).ToArray();
 
             Assert.IsEmpty(missing,
-                "デモシーンに配置されていない蓋絵がある（TransitionDemoBuilder への追加とシーン再生成が必要）: "
+                "どのデモシーンにも配置されていない蓋絵がある（ビルダーへの追加とシーン再生成が必要）: "
                 + string.Join(", ", missing));
         }
     }

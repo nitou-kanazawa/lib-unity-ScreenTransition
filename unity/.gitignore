@@ -107,3 +107,6 @@ InitTestScene*.unity*
 
 # Visual Studio のワークロード定義（Unity が環境ごとに生成する）
 /.vsconfig
+
+# スクリーンショットの出力先 (DemoAutoCapture / 動作確認)
+/[Cc]aptures/

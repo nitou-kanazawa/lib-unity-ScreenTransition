@@ -41,7 +41,7 @@ namespace Waribashi.ScreenTransitions.Demo.EditorTools
         }
         const float Duration = 0.9f;
 
-        [MenuItem("Tools/Screen Transitions/Build Demo Scene")]
+        [MenuItem("Tools/Screen Transitions/Build Catalogue Scenes Only")]
         public static void Build()
         {
             Directory.CreateDirectory(TimelineDir);
@@ -193,15 +193,13 @@ namespace Waribashi.ScreenTransitions.Demo.EditorTools
             controller.loadingToggle = CreateLoadingToggle(canvasGo.transform);
             controller.loadingToggle.transform.SetSiblingIndex(stripe.transform.GetSiblingIndex());
 
+            // ハブへ戻る導線（蓋絵より背面に置く）
+            DemoUi.AddBackToHub(canvasGo.transform);
+
             EditorSceneManager.SaveScene(scene, ScenePath);
 
-            EditorBuildSettings.scenes = new[]
-            {
-                new EditorBuildSettingsScene(ScenePath, true),
-                new EditorBuildSettingsScene(UnderseaScenePath, true),
-            };
-
-            Debug.Log($"[ScreenTransitions] Demo scenes built: {ScenePath}, {UnderseaScenePath} (patterns: {patterns.Length})");
+            // ビルド設定への登録は DemoScenesBuilder がまとめて行う
+            Debug.Log($"[ScreenTransitions] Catalogue scenes built: {ScenePath}, {UnderseaScenePath} (patterns: {patterns.Length})");
         }
 
         static TimelineAsset CreateTransitionTimeline(string path, float from, float to)
@@ -301,6 +299,8 @@ namespace Waribashi.ScreenTransitions.Demo.EditorTools
 
             var controllerGo = new GameObject("UnderseaController", typeof(UnderseaDemoController));
             controllerGo.GetComponent<UnderseaDemoController>().backButton = buttonGo.GetComponent<Button>();
+
+            DemoUi.AddBackToHub(canvasGo.transform);
 
             EditorSceneManager.SaveScene(scene, UnderseaScenePath);
         }
