@@ -6,22 +6,31 @@ namespace Waribashi.ScreenTransitions
 {
     public enum CurtainState
     {
-        /// <summary>蓋が開いている（画面が見えている・アイドル）。</summary>
+        /// <summary>蓋が開いている（何も覆っていない・アイドル）。</summary>
         Open,
         /// <summary>閉じアニメーション再生中。</summary>
         Closing,
-        /// <summary>蓋が閉じ切っている（HoldLoop 再生中）。</summary>
+        /// <summary>蓋が閉じ切っている（HoldLoop 再生中）。何をどこまで覆うかは実装による。</summary>
         Closed,
         /// <summary>開きアニメーション再生中。</summary>
         Opening,
     }
 
     /// <summary>
-    /// 蓋絵トランジションの共通契約。
-    /// - CloseAsync 完了後〜OpenAsync 開始まで、画面は完全に覆われていることを保証する
+    /// 蓋絵（画面を覆う物）の共通契約。閉じる / 開ける、以上の意味は持たせていない。
+    ///
+    /// 保証すること:
+    /// - CloseAsync 完了後〜OpenAsync 開始まで、蓋は閉じ切った状態で維持される
     /// - Closed 中は実装側の HoldLoop（ループアニメ）が自動で回る
     /// - Busy（Closing / Opening）中の再入は無視される
     /// - 時間は unscaled 基準（ロード中の timeScale 操作に影響されない）
+    ///
+    /// 保証しないこと:
+    /// - <b>どこをどこまで覆うか。</b> 全画面を塗り潰す蓋絵も、画面の一部を横切るカットインも
+    ///   同じ ICurtain である。「Closed 中は画面が完全に覆われている」は実装ごとの性質であって
+    ///   契約ではない。シーンロードを隠す用途には全画面を覆う実装を選ぶこと
+    ///   （同梱の汎用 9 種とルール画像系はいずれも全画面を覆う）
+    /// - 中断時の着地先。ObjectCurtain 派生は必ず Open へ戻すが、RuleImageCurtain は Closed へ戻る
     /// </summary>
     public interface ICurtain
     {

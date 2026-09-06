@@ -84,8 +84,8 @@ namespace Waribashi.ScreenTransitions.Tests
 
                 var group = transition.GetComponent<CanvasGroup>();
                 Assert.IsNotNull(group, "基底が CanvasGroup を自動付与すること");
-                Assert.IsTrue(group.blocksRaycasts,
-                    $"{cycle}周目: Closed 中は下のUIへの入力を遮断すること");
+                Assert.AreEqual(transition.BlocksRaycasts, group.blocksRaycasts,
+                    $"{cycle}周目: Closed 中のレイキャスト遮断が BlocksRaycasts の宣言と一致すること");
 
                 await transition.OpenAsync();
 
@@ -94,6 +94,28 @@ namespace Waribashi.ScreenTransitions.Tests
                 Assert.IsFalse(group.blocksRaycasts,
                     $"{cycle}周目: Open 完了後は入力を塞がないこと（アルファ0の全画面 Image が残っても通す）");
             }
+
+            LogAssert.NoUnexpectedReceived();
+        });
+
+        /// <summary>
+        /// BlocksRaycasts を false にした蓋絵は、閉じ切っていても下の UI の入力を塞がない。
+        /// 画面の一部しか覆わない蓋絵（カットインなど）のための opt-out。
+        /// </summary>
+        [UnityTest, Timeout(TimeoutMs)]
+        public IEnumerator Raycast_OptedOut_DoesNotBlockWhileClosed()
+            => UniTask.ToCoroutine(async () =>
+        {
+            var curtain = Create(typeof(NonBlockingTestCurtain));
+            Assert.IsFalse(curtain.BlocksRaycasts, "前提: この蓋絵は遮断しない宣言であること");
+
+            await curtain.CloseAsync();
+
+            Assert.AreEqual(CurtainState.Closed, curtain.State);
+            Assert.IsFalse(curtain.GetComponent<CanvasGroup>().blocksRaycasts,
+                "Closed 中でも下の UI へ入力が通ること");
+
+            await curtain.OpenAsync();
 
             LogAssert.NoUnexpectedReceived();
         });

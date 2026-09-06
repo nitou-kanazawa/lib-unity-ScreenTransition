@@ -20,11 +20,19 @@ namespace Waribashi.ScreenTransitions.Demo.EditorTests
         /// <summary>
         /// 具体的な蓋絵すべて。パッケージ本体とサンプルで別アセンブリに分かれているため、
         /// ロード済みアセンブリ全体を走査する。
+        ///
+        /// ただしテストアセンブリは除く。テスト用の蓋絵（基底クラスの検証のために置いてある）まで
+        /// デモシーンへの配置を要求してしまうため。
         /// </summary>
         static IEnumerable<Type> ConcreteCurtainTypes => AppDomain.CurrentDomain.GetAssemblies()
+            .Where(a => !IsTestAssembly(a))
             .SelectMany(SafeGetTypes)
             .Where(t => typeof(ObjectCurtain).IsAssignableFrom(t) && !t.IsAbstract)
             .OrderBy(t => t.FullName, StringComparer.Ordinal);
+
+        /// <summary>nunit を参照しているアセンブリはテスト用とみなす。</summary>
+        static bool IsTestAssembly(Assembly assembly)
+            => assembly.GetReferencedAssemblies().Any(n => n.Name == "nunit.framework");
 
         static IEnumerable<Type> SafeGetTypes(Assembly assembly)
         {

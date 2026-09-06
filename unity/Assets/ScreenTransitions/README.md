@@ -63,10 +63,19 @@ Open(idle) --CloseAsync--> Closing --完了--> Closed(HoldLoop 再生中)
 Open(idle) <--完了-- Opening <--OpenAsync-- Closed
 ```
 
-- `CloseAsync` 完了後〜`OpenAsync` 開始まで、画面は完全に覆われていることを保証します
+- `CloseAsync` 完了後〜`OpenAsync` 開始まで、蓋は閉じ切った状態で維持されます
 - `Closed` 中は実装側の `HoldLoop` が自動で回り、`OpenAsync` で自動キャンセルされます
 - Busy（`Closing` / `Opening`）中の再入は無視されます
 - 時間はすべて `unscaledDeltaTime` 基準なので、`timeScale = 0` にしても完走します
+- 再生中および `Closed` 中は下位 UI へのレイキャストを遮断します（`BlocksRaycasts` で opt-out 可）
+
+### 覆う範囲は契約に含みません
+
+**「`Closed` 中は画面が完全に覆われている」は実装ごとの性質であって、`ICurtain` の契約ではありません。**
+全画面を塗り潰す蓋絵も、画面の一部を横切るキャラクターのカットインも、同じ `ICurtain` です。
+
+シーンロードを隠す用途には全画面を覆う実装を選んでください。同梱の汎用 9 種とルール画像系は
+いずれも全画面を覆います。
 
 ### 中断時の挙動（実装によって異なります）
 
@@ -126,6 +135,26 @@ public class MyCurtain : ObjectCurtain
 
 基底が担保するもの: 状態管理 / 中断時の `Open` への復帰 / `CanvasGroup` によるレイキャスト制御 /
 `HoldLoop` の起動とキャンセル / `Tween`・`Ease`・`ProceduralSprites` などのヘルパー。
+
+### 画面の一部しか覆わない蓋絵（カットインなど）
+
+`BlocksRaycasts` を `false` にすると、覆っていない領域への入力が生きたままになります。
+既定は `true`（全画面を覆う蓋絵を想定）です。
+
+```csharp
+public class CharacterCutIn : ObjectCurtain
+{
+    public override bool BlocksRaycasts => false;
+
+    protected override void Build() { /* 帯・立ち絵・記号を生成 */ }
+
+    protected override UniTask CloseRoutine() => Tween(0.15f, elapsed => /* 帯が入る */);
+    protected override UniTask OpenRoutine()  => Tween(0.12f, elapsed => /* 帯が抜ける */);
+}
+
+// 入る → 一瞬保持 → 抜ける
+await ScreenTransitionService.Instance.Use<CharacterCutIn>().RunAsync(0.25f);
+```
 
 ## サンプル
 

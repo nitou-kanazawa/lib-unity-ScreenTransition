@@ -44,7 +44,7 @@ namespace Waribashi.ScreenTransitions
     /// 派生クラスは CloseRoutine / OpenRoutine（任意で HoldLoop）を実装するだけでよい。
     /// - 子要素は初回再生時に手続き生成（Build）
     /// - Closed 中は HoldLoop が自動再生され、OpenAsync で自動キャンセルされる
-    /// - CanvasGroup により再生中・閉じ中のみ下のUIへのレイキャストを遮断する
+    /// - CanvasGroup により再生中・閉じ中のみ下のUIへのレイキャストを遮断する（BlocksRaycasts で opt-out 可能）
     /// - 時間は unscaled 基準
     /// </summary>
     [RequireComponent(typeof(RectTransform))]
@@ -53,6 +53,16 @@ namespace Waribashi.ScreenTransitions
         public string displayName;
 
         public string DisplayName => string.IsNullOrEmpty(displayName) ? GetType().Name : displayName;
+
+        /// <summary>
+        /// 再生中および Closed 中に、下位 UI へのレイキャストを遮断するか。既定は true。
+        ///
+        /// 画面を覆い切る蓋絵では遮断が正しいが、画面の一部しか覆わない蓋絵
+        /// （キャラクターのカットインなど）では、覆っていない領域の入力まで殺してしまう。
+        /// そういう実装は false を返すこと。
+        /// </summary>
+        public virtual bool BlocksRaycasts => true;
+
         public CurtainState State { get; private set; } = CurtainState.Open;
 
         bool _built;
@@ -74,7 +84,7 @@ namespace Waribashi.ScreenTransitions
             if (!gameObject.activeSelf)
                 gameObject.SetActive(true);
             EnsureBuilt();
-            _group.blocksRaycasts = true;
+            _group.blocksRaycasts = BlocksRaycasts;
             State = CurtainState.Closing;
             BeginPhase(ct);
             try

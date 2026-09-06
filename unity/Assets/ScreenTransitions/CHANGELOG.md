@@ -25,6 +25,17 @@
 
 ### 変更
 
+- `ICurtain` の契約から「`Closed` 中は画面が完全に覆われている」を降ろした。覆う範囲は
+  実装ごとの性質とし、全画面を塗り潰す蓋絵も画面の一部を横切るカットインも同じ `ICurtain`
+  として扱えるようにした。シーンロードを隠す用途に全画面の実装が要ることは README に明記
+- `ObjectCurtain.BlocksRaycasts`（`virtual`、既定 `true`）を追加。従来は再生中・`Closed` 中の
+  レイキャスト遮断が無条件だったため、画面の一部しか覆わない蓋絵が、覆っていない領域の入力まで
+  殺していた。`false` を返せば opt-out できる
+- 契約テストのレイキャスト検証を、`BlocksRaycasts` の宣言との一致を見る形に変更した。
+  併せて opt-out したテスト用の蓋絵 `NonBlockingTestCurtain` を追加し、
+  基底クラス単体で契約を満たすことも検証対象にした
+- デモの網羅テストがテストアセンブリの蓋絵まで対象にしていたのを除外した
+
 - 配布用の `Samples~/Demo` を追加し、開発用の `Assets/Demo` から同期する仕組みを入れた
   （`tools/sync-samples.sh` と、同期漏れを落とす CI）。`package.json` の `samples` が
   実体の無いパスを指していて Package Manager に失敗する Import ボタンが出ていたのを解消
