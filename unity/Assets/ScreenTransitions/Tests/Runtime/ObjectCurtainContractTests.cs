@@ -120,6 +120,89 @@ namespace Waribashi.ScreenTransitions.Tests
             LogAssert.NoUnexpectedReceived();
         });
 
+        // ------------------------------------------------------------------
+        // 早送り（Complete）
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Closing 中の Complete() は Closed へ早送りする。
+        /// キャンセルと違い巻き戻さないので、終端姿勢の蓋がそのまま残る。
+        /// </summary>
+        [UnityTest, Timeout(TimeoutMs)]
+        public IEnumerator Complete_DuringClose_FastForwardsToClosed(
+            [ValueSource(typeof(CurtainTypes), nameof(CurtainTypes.All))] Type type)
+            => UniTask.ToCoroutine(async () =>
+        {
+            var curtain = Create(type);
+            var closing = curtain.CloseAsync();
+            await UniTask.Yield();
+
+            Assert.AreEqual(CurtainState.Closing, curtain.State, "前提: Closing に入っていること");
+            Assert.IsTrue(curtain.Complete(), "Busy 中の Complete は受け付けられること");
+
+            int frame = Time.frameCount;
+            await closing;
+
+            Assert.AreEqual(CurtainState.Closed, curtain.State, "Closed へ着地すること");
+            Assert.LessOrEqual(Time.frameCount - frame, 3,
+                "残りの Tween を待たずに終わること（数珠つなぎでも同一フレームで抜ける）");
+            Assert.IsTrue(curtain.gameObject.activeSelf, "蓋が残っていること（キャンセルとは違う）");
+            Assert.Greater(curtain.transform.childCount, 0,
+                "終端姿勢の子要素が残っていること（キャンセル経路を通っていない）");
+
+            await curtain.OpenAsync();
+
+            LogAssert.NoUnexpectedReceived();
+        });
+
+        /// <summary>Opening 中の Complete() は Open へ早送りする。</summary>
+        [UnityTest, Timeout(TimeoutMs)]
+        public IEnumerator Complete_DuringOpen_FastForwardsToOpen(
+            [ValueSource(typeof(CurtainTypes), nameof(CurtainTypes.All))] Type type)
+            => UniTask.ToCoroutine(async () =>
+        {
+            var curtain = Create(type);
+            await curtain.CloseAsync();
+
+            var opening = curtain.OpenAsync();
+            await UniTask.Yield();
+
+            Assert.AreEqual(CurtainState.Opening, curtain.State, "前提: Opening に入っていること");
+            Assert.IsTrue(curtain.Complete());
+
+            int frame = Time.frameCount;
+            await opening;
+
+            Assert.AreEqual(CurtainState.Open, curtain.State, "Open へ着地すること");
+            Assert.LessOrEqual(Time.frameCount - frame, 3, "残りの Tween を待たずに終わること");
+            Assert.IsFalse(curtain.GetComponent<CanvasGroup>().blocksRaycasts,
+                "Open 完了後は入力を塞がないこと");
+
+            LogAssert.NoUnexpectedReceived();
+        });
+
+        /// <summary>
+        /// 実行中のフェーズが無ければ Complete() は何もしない。
+        /// 特に Closed 中（HoldLoop）を飛ばせないのは意図した仕様で、
+        /// そこで待っているのがロードかどうかは呼び出し側にしか判断できないため。
+        /// </summary>
+        [UnityTest, Timeout(TimeoutMs)]
+        public IEnumerator Complete_WhenNoPhaseIsRunning_IsRejected()
+            => UniTask.ToCoroutine(async () =>
+        {
+            var curtain = Create(typeof(NonBlockingTestCurtain));
+
+            Assert.IsFalse(curtain.Complete(), "Open 中は受け付けないこと");
+
+            await curtain.CloseAsync();
+            Assert.AreEqual(CurtainState.Closed, curtain.State);
+            Assert.IsFalse(curtain.Complete(), "Closed 中（HoldLoop）は受け付けないこと");
+
+            await curtain.OpenAsync();
+
+            LogAssert.NoUnexpectedReceived();
+        });
+
         /// <summary>Busy（Closing / Opening）中の再入は無視され、状態を壊さない。</summary>
         [UnityTest, Timeout(TimeoutMs)]
         public IEnumerator Reentrancy_WhileBusy_IsIgnored(

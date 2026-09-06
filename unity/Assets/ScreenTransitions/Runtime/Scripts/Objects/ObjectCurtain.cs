@@ -66,6 +66,7 @@ namespace Waribashi.ScreenTransitions
         public CurtainState State { get; private set; } = CurtainState.Open;
 
         bool _built;
+        bool _completeRequested;
         CanvasGroup _group;
         CancellationTokenSource _phaseCts;
         CancellationTokenSource _holdCts;
@@ -90,6 +91,7 @@ namespace Waribashi.ScreenTransitions
             try
             {
                 await CloseRoutine();
+                _completeRequested = false;
                 State = CurtainState.Closed;
                 StartHoldLoop();
             }
@@ -111,6 +113,7 @@ namespace Waribashi.ScreenTransitions
             try
             {
                 await OpenRoutine();
+                _completeRequested = false;
                 State = CurtainState.Open;
                 _group.blocksRaycasts = false;
                 // アイドル中は Canvas に頂点を残さない
@@ -121,6 +124,28 @@ namespace Waribashi.ScreenTransitions
                 ResetToOpen();
                 throw;
             }
+        }
+
+        /// <summary>
+        /// 実行中のフェーズ（Closing / Opening）を終端まで早送りする。
+        ///
+        /// キャンセルとは向きが逆であることに注意。
+        ///   キャンセル : 巻き戻して Open へ着地する（「なかったことにする」）
+        ///   Complete  : 早送りして そのフェーズの終端へ着地する（「最後まで進める」）
+        /// Closing 中なら Closed、Opening 中なら Open に、待たずに到達する。
+        /// 着地後の状態は通常再生と同じで、中断復帰の経路（子要素の破棄）は通らない。
+        ///
+        /// Closed 中（HoldLoop 再生中）は受け付けない。そこで待っているのがロードなのか
+        /// ただの間なのかは呼び出し側にしか判断できないため。飛ばしたい場合は OpenAsync を呼ぶこと。
+        /// </summary>
+        /// <returns>受け付けたら true。Open / Closed（= 実行中のフェーズが無い）なら false。</returns>
+        public bool Complete()
+        {
+            if (State != CurtainState.Closing && State != CurtainState.Opening)
+                return false;
+
+            _completeRequested = true;
+            return true;
         }
 
         /// <summary>
@@ -194,6 +219,7 @@ namespace Waribashi.ScreenTransitions
 
         void BeginPhase(CancellationToken ct)
         {
+            _completeRequested = false;
             _phaseCts?.Dispose();
             _phaseCts = CancellationTokenSource.CreateLinkedTokenSource(ct, this.GetCancellationTokenOnDestroy());
             PhaseToken = _phaseCts.Token;
@@ -236,9 +262,33 @@ namespace Waribashi.ScreenTransitions
 
         protected abstract void Build();
 
-        /// <summary>elapsed 秒（unscaled）を毎フレーム渡しながら duration 秒回す。最後に必ず duration ちょうどで呼ぶ。</summary>
-        protected UniTask Tween(float duration, Action<float> apply) => Tween(duration, apply, PhaseToken);
+        /// <summary>
+        /// elapsed 秒（unscaled）を毎フレーム渡しながら duration 秒回す。最後に必ず duration ちょうどで呼ぶ。
+        ///
+        /// Complete() が要求されている間は待たずに apply(duration) だけ呼んで返る。
+        /// Close/Open のルーチンが Tween を数珠つなぎにしている場合、残り全部が同じフレームで
+        /// 終端まで進むので、派生クラス側に早送りの実装は要らない。
+        /// </summary>
+        protected async UniTask Tween(float duration, Action<float> apply)
+        {
+            var ct = PhaseToken;
+            float elapsed = 0f;
+            while (elapsed < duration && !_completeRequested)
+            {
+                ct.ThrowIfCancellationRequested();
+                elapsed += Time.unscaledDeltaTime;
+                apply(Mathf.Min(elapsed, duration));
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+            }
 
+            if (_completeRequested)
+                apply(duration);
+        }
+
+        /// <summary>
+        /// ct 駆動の Tween。HoldLoop など、フェーズの外で回すループ向け。
+        /// こちらは Complete() の影響を受けない（ループの早送りには意味が無いため）。
+        /// </summary>
         protected static async UniTask Tween(float duration, Action<float> apply, CancellationToken ct)
         {
             float elapsed = 0f;

@@ -22,6 +22,7 @@ namespace Waribashi.ScreenTransitions
         [SerializeField] TimelineAsset loopTimeline;
 
         PlayableDirector _director;
+        bool _completeRequested;
 
         public TransitionImage Target { get => target; set => target = value; }
         public TimelineAsset CloseTimeline { get => closeTimeline; set => closeTimeline = value; }
@@ -49,6 +50,7 @@ namespace Waribashi.ScreenTransitions
                 return;
 
             State = CurtainState.Closing;
+            _completeRequested = false;
             try
             {
                 await PlayOnce(closeTimeline, 1f, ct);
@@ -70,6 +72,7 @@ namespace Waribashi.ScreenTransitions
 
             _director.Stop(); // ループを止める
             State = CurtainState.Opening;
+            _completeRequested = false;
             try
             {
                 await PlayOnce(openTimeline, 0f, ct);
@@ -84,6 +87,20 @@ namespace Waribashi.ScreenTransitions
                 }
                 throw;
             }
+        }
+
+        /// <summary>
+        /// 実行中のフェーズ（Closing / Opening）の Timeline を止め、Cutoff を終端値に確定させる。
+        /// ObjectCurtain.Complete() と同じ意味。
+        /// </summary>
+        /// <returns>受け付けたら true。Open / Closed なら false。</returns>
+        public bool Complete()
+        {
+            if (State != CurtainState.Closing && State != CurtainState.Opening)
+                return false;
+
+            _completeRequested = true;
+            return true;
         }
 
         void StartLoop()
@@ -118,7 +135,16 @@ namespace Waribashi.ScreenTransitions
 
             // DirectorWrapMode.None なので末尾到達で Paused になる
             while (_director.state == PlayState.Playing)
+            {
+                // 早送り要求。最終値は下で確定させるので、ここでは再生を止めるだけでよい
+                if (_completeRequested)
+                {
+                    _director.Stop();
+                    break;
+                }
+
                 await UniTask.Yield(PlayerLoopTiming.Update, linked.Token);
+            }
 
             // 終端フレームの取りこぼし対策として最終値を確定させる
             target.Cutoff = endValue;

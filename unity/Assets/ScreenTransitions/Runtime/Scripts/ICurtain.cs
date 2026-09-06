@@ -35,8 +35,20 @@ namespace Waribashi.ScreenTransitions
     public interface ICurtain
     {
         CurtainState State { get; }
+
         UniTask CloseAsync(CancellationToken ct = default);
+
         UniTask OpenAsync(CancellationToken ct = default);
+
+        /// <summary>
+        /// 実行中のフェーズ（Closing / Opening）を終端まで早送りする。キャンセルとは向きが逆で、
+        /// 巻き戻さずに「最後まで進める」。Closing 中なら Closed、Opening 中なら Open へ待たずに着地する。
+        ///
+        /// Closed 中（HoldLoop 再生中）は受け付けない。そこで待っているのがロードなのか
+        /// ただの間なのかは呼び出し側にしか判断できないため。
+        /// </summary>
+        /// <returns>受け付けたら true。実行中のフェーズが無ければ false。</returns>
+        bool Complete();
     }
 
     public static class CurtainExtensions
